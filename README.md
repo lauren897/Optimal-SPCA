@@ -1,7 +1,9 @@
 # Optimal-SPCA
 
 Software supplement for the paper
+
 "Certifiably Optimal Principal Component Analysis"
+
 by Lauren Berk and Dimitris Bertsimas
 
 [![DOI](https://zenodo.org/badge/160833968.svg)](https://zenodo.org/badge/latestdoi/160833968)
@@ -32,7 +34,7 @@ At this point, the file "test.jl" should run successfully.  To run the script, n
 
 Then run:
 
-include("test.jl")
+`include("test.jl")`
 
 The script will run the branch and bound algorithm on the Pitprops dataset, and then generate an additional random problem and run the algorithm on that problem.
 
