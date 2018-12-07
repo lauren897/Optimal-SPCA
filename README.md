@@ -8,9 +8,8 @@ by Lauren Berk and Dimitris Bertsimas
 
 [![DOI](https://zenodo.org/badge/160833968.svg)](https://zenodo.org/badge/latestdoi/160833968)
 
----
 
-1. Introduction
+## Introduction
 
 The software in this package is designed to solve the problem
 
@@ -19,9 +18,8 @@ The software in this package is designed to solve the problem
 
 using a branch-and-bound approach.  The code implements Optimal-SPCA in the paper "Certifiably Optimal Principal Component Analysis"  by Lauren Berk and Dimitris Bertsimas.
 
----
 
-2. Installation and set up
+## Installation and set up
 
 In order to run this software, you must install a recent version of Julia from http://julialang.org/downloads/.  The most recent version of Julia at the time this code was last tested was Julia 0.6.0.
 
@@ -34,21 +32,16 @@ At this point, the file "test.jl" should run successfully.  To run the script, n
 
 `include("test.jl")`
 
-The script will run the branch and bound algorithm on the Pitprops dataset, and then generate an additional random problem and run the algorithm on that problem.  It will then identify the first few sparse principal components using Optimal-SPCA sequentially and reporting the cumulative variance explained. 
+ The script will run Optimal-SPCA on the Pitprops dataset, and then generate an additional random problem and run the algorithm on that problem.  It will then identify the first few sparse principal components using Optimal-SPCA sequentially and reporting the cumulative variance explained. 
 
----
+## Use of the branchAndBound() function
 
-3. Use of the branchAndBound() function
+The key method in these packages is branchAndBound().  It takes two required  arguments: `prob`, and `k`.  The variable `prob` is a custom type that holds the original data as well as the covariance matrix associated with the problem.  (If data is not available, the cholesky factorization of the covariance matrix will suffice.)  The data is presented in an m x n array, with m  data points in n dimensions.  The corresponding covariance matrix is n x n.  The parameter `k` is a positive integer less than n.
 
-The key method in these packages is branchAndBound().  It takes two required  arguments: prob, and k.  Prob is a custom type that holds the original data as well as the covariance matrix associated with the problem.  (If data is not available, the cholesky factorization of the covariance matrix will suffice,  and not affect the solution.)  The data is presented in an m x n array, with m  data points in n dimensions.  The corresponding covariance matrix is n x n.  The parameter k is a positive integer less than n.
+By default, branchAndBound() solves the problem and returns the objective function value, solution vector, and  a few performance metrics, including time elapsed and the number of nodes explored. There are many optional parameters, some of which are discussed in detail in our paper. Other parameters have to do with technical aspects of the algorithm, like convergence criteria and resizing arrays.  These are commented on in  detail in the branchAndBound.jl file where the function is defined.
 
-There are many optional parameters, some of which are discussed in detail in our paper. Other parameters have to do with technical aspects of the algorithm, like convergence criteria and resizing arrays.  These are commented on in  detail in the branchAndBound.jl file where the function is defined.
 
-The function returns the objective function value, solution vector, and  a few performance metrics, including time elapsed and the number of nodes explored. The function also returns a print-out of the algorithm's progress over time.
-
----
-
-4. Thank you
+## Thank you
 
 Thank you for your interest in Optimal-SPCA. Please let us know if you encounter any  issues using this code, or have comments or questions.  Feel free to email us anytime.
 
