@@ -30,21 +30,19 @@ Two packages must be installed in Julia before the code can be run.  These packa
 `Pkg.add("DataFrames")`
 `Pkg.add("StatsBase")`
 
-At this point, the file "test.jl" should run successfully.  To run the script, navigate to the directory containing these .jl files and the pitprops.csv file.
-
-Then run:
+At this point, the file "test.jl" should run successfully.  To run the script, navigate to the Algorithm directory and run:
 
 `include("test.jl")`
 
-The script will run the branch and bound algorithm on the Pitprops dataset, and then generate an additional random problem and run the algorithm on that problem.
+The script will run the branch and bound algorithm on the Pitprops dataset, and then generate an additional random problem and run the algorithm on that problem.  It will then identify the first few sparse principal components using Optimal-SPCA sequentially and reporting the cumulative variance explained. 
 
 ---
 
 3. Use of the branchAndBound() function
 
-The key method in these packages is branchAndBound().  It takes two required  arguments: prob, and k.  Prob is a custom type that holds the original data as well as the covariance matrix associated with the problem.  (If data is not available, the cholesky factorization of the covariance matrix will suffice,  and not affect the solution.)  The data is presented in an m x n array, with m  data points in n dimensions.  The corresponding covariance matrix is n x n.  The  parameter k is a postiive integer less than n.
+The key method in these packages is branchAndBound().  It takes two required  arguments: prob, and k.  Prob is a custom type that holds the original data as well as the covariance matrix associated with the problem.  (If data is not available, the cholesky factorization of the covariance matrix will suffice,  and not affect the solution.)  The data is presented in an m x n array, with m  data points in n dimensions.  The corresponding covariance matrix is n x n.  The parameter k is a positive integer less than n.
 
-There are many optional parameters, some of which are discussed in detail in our paper. Other parameters have to do techincal aspects of the algorithm, like convergence criteria and resizing arrays.  These are commented on in  detail in the branchAndBound.jl file where the function is defined.
+There are many optional parameters, some of which are discussed in detail in our paper. Other parameters have to do with technical aspects of the algorithm, like convergence criteria and resizing arrays.  These are commented on in  detail in the branchAndBound.jl file where the function is defined.
 
 The function returns the objective function value, solution vector, and  a few performance metrics, including time elapsed and the number of nodes explored. The function also returns a print-out of the algorithm's progress over time.
 
@@ -52,7 +50,7 @@ The function returns the objective function value, solution vector, and  a few p
 
 4. Thank you
 
-Thank you for reading and considering our paper for publication in  Mathematical Programming Computation. Please let us know if you encounter any  issues using this code, or have comments or questions.  Feel free to email us anytime.
+Thank you for your interest in Optimal-SPCA. Please let us know if you encounter any  issues using this code, or have comments or questions.  Feel free to email us anytime.
 
 Lauren Berk
 lberk@mit.edu
