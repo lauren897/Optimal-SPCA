@@ -4,6 +4,8 @@ Software supplement for the paper
 "Certifiably Optimal Principal Component Analysis"
 by Lauren Berk and Dimitris Bertsimas
 
+[![DOI](https://zenodo.org/badge/160833968.svg)](https://zenodo.org/badge/latestdoi/160833968)
+
 ---
 
 1. Introduction
