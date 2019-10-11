@@ -1,4 +1,4 @@
-using CSV, LinearAlgebra
+using LinearAlgebra
 
 
 function projectMatrix(sig, xVal)

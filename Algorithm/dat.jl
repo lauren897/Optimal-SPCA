@@ -1,4 +1,4 @@
-using DataFrames, DelimitedFiles
+using DataFrames
 
 mutable struct problem
     data::Array{Float64}
