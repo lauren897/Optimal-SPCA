@@ -1,4 +1,4 @@
-type problem
+mutable struct problem
     data::Array{Float64}
     Sigma::Array{Float64}
 end
@@ -10,7 +10,7 @@ end
 
 # return objective and solution given a support vector (of 0s and 1s)
 function evalSupport(support, prob)
-	xVal = eig(Qhat(prob.Sigma,support))[2][:,size(prob.Sigma,1)]
+	xVal = LinearAlgebra.eig(Qhat(prob.Sigma,support))[2][:,size(prob.Sigma,1)]
 	return evaluate(xVal, prob)
 end
 
@@ -18,11 +18,11 @@ end
 function evalIndices(support, prob)
 	y = round.(Int64,zeros(size(prob.Sigma,1)))
 	y[support[support.!=0]] = 1
-	xVal = eig(Qhat(prob.Sigma,y))[2][:,size(prob.Sigma,1)]
+	xVal = LinearAlgebra.eig(Qhat(prob.Sigma,y))[2][:,size(prob.Sigma,1)]
 	return evaluate(xVal, prob)
 end
 
-# routine for creating a new problem out of a large data set by selecting 
+# routine for creating a new problem out of a large data set by selecting
 # a subset of dimensions out of all the variables in the problem
 function shrinkProblem(prob, dimensions)
 	finished = false
@@ -61,22 +61,22 @@ function myeigmax(SigOrA, thisStart, y, highDim, refineCap)
 		m, n = size(thisA)
 		Q = thisA*thisA'/(m-1)
 		b = thisStart[yKeep]
-		b = thisA*(b / norm(b))
+		b = thisA*(b / LinearAlgebra.LinearAlgebra.norm(b))
 		normb = 0
-		newnorm = norm(b)
+		newnorm = LinearAlgebra.norm(b)
 	else
 		Q = copy(SigOrA[yKeep,yKeep])
 		beta0 = thisStart[yKeep]
-		normb = norm(beta0)
+		normb = LinearAlgebra.norm(beta0)
 		b = Q*beta0
-		newnorm = norm(b)
+		newnorm = LinearAlgebra.norm(b)
 	end
 
 	cycles = 0
 	while abs(normb - newnorm) > .0001*normb && cycles < 100
 		normb = newnorm
 		b = Q*(b / normb)
-		newnorm = norm(b)
+		newnorm = LinearAlgebra.norm(b)
 		if refineCap>0
 			if newnorm > refineCap
 				return refineCap, copy(b/normb)
@@ -87,8 +87,8 @@ function myeigmax(SigOrA, thisStart, y, highDim, refineCap)
 
 	if highDim
 		b = thisA'*b
-		b = thisA'*(thisA*b/norm(b))/(m-1)
-		normb = norm(b)
+		b = thisA'*(thisA*b/LinearAlgebra.norm(b))/(m-1)
+		normb = LinearAlgebra.norm(b)
 	end
 
 	b = b/normb
@@ -100,19 +100,18 @@ end
 
 #Creates a sparse version of a vector by killing smallest components and scaling up
 function Hk(origlist, sparsity, support)
-	list = copy(origlist)
+	list = real(copy(origlist))
 	ksparse = zeros(length(list))
 	indicesToKeep = (support.==1)
-
 	dummyvalue = minimum(list)-1
-	list[(support.>-1)] = dummyvalue
+	list[(support.>-1)] .= dummyvalue
 
 	newIndices = selectperm2(list, sparsity-sum(indicesToKeep))
-	indicesToKeep[newIndices]=true
+	indicesToKeep[newIndices].=true
 
 	ksparse[indicesToKeep]=origlist[indicesToKeep]
 
-	ksparse = ksparse / norm(ksparse[indicesToKeep])
+	ksparse = ksparse / LinearAlgebra.norm(ksparse[indicesToKeep])
 
 	return ksparse
 end
@@ -126,8 +125,8 @@ function selectperm2(x,k)
         kk = 1
     end
     z = collect(1:length(x))
-    return select!(z,1:k,by = (i)->abs(x[i]), rev = true)
-end   
+    return partialsort!(z,1:k,by = (i)->abs(x[i]), rev = true)
+end
 
 # selects out of x the k largest values
 # for use in B+B algorithm
@@ -138,8 +137,8 @@ function selectsorted(x,k)
         kk = 1
     end
     z = collect(1:length(x))
-    return select!(x,1:k,by = (i)->(i), rev = true)
-end   
+    return partialsort!(x,1:k,by = (i)->(i), rev = true)
+end
 
 # partitions a vector of length x into n parts
 yourpart(x,n) = Any[Any[x[i:n:length(x)]] for i in 1:n]
@@ -154,9 +153,10 @@ end
 # Yuan and zhang algorithm with random restarts
 function subset(prob, k; timeLimit = 7200, support = zeros(1), countdown = 100)
 	n = size(prob.Sigma,1)
-	beta0=eig(prob.Sigma)[2][:,n]
+	lambdas, betas, =Arpack.eigs(prob.Sigma, nev=1, which=:LR)
+	beta0=betas[:,1]
 	if length(support)==1
-		support = zeros(n)-1
+		support = zeros(n).-1
 	end
 
 	#Starts with local search starting at first eigenvector
@@ -167,7 +167,7 @@ function subset(prob, k; timeLimit = 7200, support = zeros(1), countdown = 100)
 	margin = 1
 	while countdown > 0 && time()-start < timeLimit
 		beta = rand(size(prob.Sigma,1))
-		beta = beta / norm(beta0)
+		beta = beta / LinearAlgebra.norm(beta0)
 		beta = eigSubset(prob, support, k, beta)
 		obj, ~ = evaluate(beta, prob)
 		if obj > bestObj
