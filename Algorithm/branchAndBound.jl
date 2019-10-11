@@ -9,7 +9,6 @@ function branchAndBound(prob, #problem object
 		localSearchSteps = 2, # number of steps to take to find good feasible solutions at each node
 		ksegmentsTrigger = 0, # use alternative branching when the number of indices left to set falls below this number
 		dimSelectSteps = 10, # number of steps to take in choosing the dimension to branch on
-		useSOCPRelax=false,
 		branchDimSelectMethod = 0,
 		UOE=5000, # buffer to add when resizing arrays containing nodes and bounds
 		gap = .000001, # optimality gap for the algorithm
@@ -108,7 +107,7 @@ function branchAndBound(prob, #problem object
 		eb1=0
 		cutoff = oldub*(1-1e-6)
 		for i=1:length(y)
-			if y[i]==-1 #indicates that we are actually cycling through all columns in indices_variable?
+			if y[i]==-1
 			    newsum = startingsums[i]
 			    added = 0
 			    j=1
@@ -277,7 +276,6 @@ function branchAndBound(prob, #problem object
 	else
 		upper_bounds[1], startingEig = myeigmax(Sigma, ones(n), ones(n), false, 0)
 	end
-	lambda_ub=1e10
 
 	firsteigOrder = sortperm(-abs.(startingEig))
 
