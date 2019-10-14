@@ -5,10 +5,6 @@ mutable struct problem
     Sigma::Array{Float64}
 end
 ###############################################################################
-### This test script aims to verify correctness of our code,
-### by verifying that the sparse principal components found here match those
-### found by (Berk+Bertsimas, 2017) on the UCI dataset
-###
 ### We have hard-coded the test data here, in order to avoid Julia dependency issues
 ###############################################################################
 include(normpath(joinpath(@__FILE__,"..",".."))*"Algorithm/branchAndBound.jl")
