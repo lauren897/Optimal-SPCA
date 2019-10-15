@@ -1,3 +1,4 @@
+using LinearAlgebra, Printf, Arpack
 function branchAndBound(prob, #problem object
 		K; # target sparsity
 		outputFlag = 3, # 1, 2, or 3 depending on level of detail sought in output
@@ -8,7 +9,6 @@ function branchAndBound(prob, #problem object
 		localSearchSteps = 2, # number of steps to take to find good feasible solutions at each node
 		ksegmentsTrigger = 0, # use alternative branching when the number of indices left to set falls below this number
 		dimSelectSteps = 10, # number of steps to take in choosing the dimension to branch on
-
 		branchDimSelectMethod = 0,
 		UOE=5000, # buffer to add when resizing arrays containing nodes and bounds
 		gap = .000001, # optimality gap for the algorithm
@@ -16,7 +16,7 @@ function branchAndBound(prob, #problem object
 		eigCycles = 500, # max number of iterations of the power method
 		valtobeat = 0) # if non-zero, the algorithm will terminate once it has a solution with objective value larger than this
 
-	# computes the vector b that maximizes b'Qb 
+	# computes the vector b that maximizes b'Qb
 	# subject to the support of b being <= abs(y)
 	# terminates convergence early once the eigenvalue crosses refineCap (if not 0)
 	# refineCap is used when generating multiple upper bounds for a subproblem
@@ -30,22 +30,22 @@ function branchAndBound(prob, #problem object
 			thism, ~ = size(thisA)
 			Q = thisA*thisA'/(thism-1)
 			b = startingEig[yKeep]
-			b = thisA*(b / norm(b))
+			b = thisA*(b / LinearAlgebra.norm(b))
 			normb = 0
-			newnorm = norm(b)
+			newnorm = LinearAlgebra.norm(b)
 		else
 			Q = copy(Sigma[yKeep,yKeep])
 			beta0 = startingEig[yKeep]
-			normb = norm(beta0)
+			normb = LinearAlgebra.norm(beta0)
 			b = Q*beta0
-			newnorm = norm(b)
+			newnorm = LinearAlgebra.norm(b)
 		end
 
 		cycles = 0
 		while abs(normb - newnorm) > eigGap*normb && cycles < eigCycles
 			normb = newnorm
 			b = Q*(b / normb)
-			newnorm = norm(b)
+			newnorm = LinearAlgebra.norm(b)
 			if refineCap>0
 				if newnorm > refineCap
 					return refineCap, copy(b/normb)
@@ -56,8 +56,8 @@ function branchAndBound(prob, #problem object
 
 		if highDim
 			b = thisA'*b
-			b = thisA'*(thisA*b/norm(b))/(thism-1)
-			normb = norm(b)
+			b = thisA'*(thisA*b/LinearAlgebra.norm(b))/(thism-1)
+			normb = LinearAlgebra.norm(b)
 		end
 
 		b = b/normb
@@ -85,14 +85,14 @@ function branchAndBound(prob, #problem object
 			return [lower_val true_upper]
 		end
 	end
-	
+
 	# Computes two upper bounds for the problem at node y
 	# The first is based on gershgorin circle theorem
 	# The second is based on the trace
 	# The function returns the lesser of the two bounds
 	# oldub (the upper bound from the parent node) provides a maximum value on
 	# the upper bound at y.  It is used here to terminate the gershgorin calculation early
-	# if it is found that the gershgorin bound is higher than oldub
+	# if the gershgorin bound is higher than oldub
 	function eigen_bound(y, oldub)
 		ypositive = (y.==1)
 		numpositive = sum(ypositive)
@@ -102,8 +102,8 @@ function branchAndBound(prob, #problem object
 		#Inspired by gershgorin circle theorem
 		#Hard to scale well
 		stillneed = K-numpositive
-		startingsums = sum(absSigma[:, ypositive],2)
-		
+		startingsums = sum(absSigma[:, ypositive],dims=2)
+
 		eb1=0
 		cutoff = oldub*(1-1e-6)
 		for i=1:length(y)
@@ -150,7 +150,7 @@ function branchAndBound(prob, #problem object
 	# being where y_i == -1.
 	function branchDimSelect(y)
 		#"dumb", "smart", "random", "semirandom"
-		negindices = find(s -> s == -1, y)
+		negindices = findall(s -> s == -1, y)
 
 		if branchDimSelectMethod == 0  # adaptive
 
@@ -164,14 +164,14 @@ function branchAndBound(prob, #problem object
 				Q = Sigma[negindices,negindices]
 				b = startingEig[negindices]
 				for i = 1:dimSelectSteps
-					b = Q*(b / norm(b))
+					b = Q*(b / LinearAlgebra.norm(b))
 				end
 				dim = negindices[findmax(abs.(b))[2]]
 				dimSelectLookup[negindices] = dim
 			end
 		elseif branchDimSelectMethod == 1 # random
 			dim = rand(negindices)
-		elseif branchDimSelectMethod == 2 # sort by Q_ii 
+		elseif branchDimSelectMethod == 2 # sort by Q_ii
 			dim = intersect(sortedOrder, negindices)[1]
 		else # sort by loading on first eigenvector
 			dim = intersect(firsteigOrder, negindices)[1]
@@ -236,7 +236,7 @@ function branchAndBound(prob, #problem object
 
 	Sigma = prob.Sigma
 	absSigma = abs.(Sigma)
-	diagSigma = diag(Sigma)
+	diagSigma = LinearAlgebra.diag(Sigma)
 	sortedOrder = sortperm(-diagSigma) #order from largest to smallest
 
 	permMat = round.(Int64,zeros(size(absSigma)))
@@ -256,10 +256,13 @@ function branchAndBound(prob, #problem object
 		highDim = true
 	end
 
+
 	# Uses the Yuan algorithm to generate a warm start if none was provided
 	if length(warmStart)==1
 		~, warmStart = subset(prob, K, timeLimit = max(20,timeCap/100))
 	end
+
+
 
 	#initializing variables
 	nodes = zeros(n, UOE)
@@ -273,11 +276,11 @@ function branchAndBound(prob, #problem object
 	else
 		upper_bounds[1], startingEig = myeigmax(Sigma, ones(n), ones(n), false, 0)
 	end
-	firsteigOrder = sortperm(-abs.(startingEig)) 
+
+	firsteigOrder = sortperm(-abs.(startingEig))
 
 
 	eigGap = eigGapSave
-
 	upper = maximum(upper_bounds)
 	lower = (transpose(warmStart)*Sigma*warmStart)[1]
 	death = falses(UOE)
@@ -289,22 +292,23 @@ function branchAndBound(prob, #problem object
 	if K == n
 		lower = upper
 	end
-	
+
 	explored = 0
 	lower_revised = 0
 	best_node = (warmStart.!=0)*1
 
 	#Initializes output
-	toPrint=[@sprintf("%.4e, %.4e, %.4e, %d, %d \n", time()-start, upper, lower, explored, num_nodes)]
+	println(" Nodes,   Left,  Objective,  Incumbent,       Gap(%),   Runtime(s)")
+	toPrint=[Printf.@sprintf("%6d, %6d, %10f, %10f, %10.3f %%, %10.3f s \n", num_nodes, explored, upper, lower, (upper-lower)/(1e-10+upper)*100, time()-start)]
 	printtime = time()
 
 	while (upper - lower)/upper > gap  && time()-start < timeCap
 		explored = explored + 1
 
 		# Occasionally print updates and risize arrays
-		if lower_revised == 1 || size(nodes)[2]-num_nodes < K+5 || explored < 100 
-			nodesToKeep = .!(upper_bounds.< lower) .& .!death 
-			nodesToKeep = find(s->s,nodesToKeep)
+		if lower_revised == 1 || size(nodes)[2]-num_nodes < K+5 || explored < 100
+			nodesToKeep = .!(upper_bounds.< lower) .& .!death
+			nodesToKeep = findall(s->s,nodesToKeep)
 			nodesToKeep = nodesToKeep[nodesToKeep.< num_nodes+1]
 			upper_bounds = [upper_bounds[nodesToKeep]; zeros(UOE)]
 			nodes = [nodes[:, nodesToKeep] zeros(n,UOE)]
@@ -317,54 +321,52 @@ function branchAndBound(prob, #problem object
 		if lower_revised == 1 || explored < 100 || time() - printtime > 1
 			printtime = time()
 			if outputFlag == 1
-				@printf("%.4e, %.4e, %.4e \n", time()-start, upper, lower) 
+				#Printf.@printf("%.4e, %.4e, %.4e \n", time()-start, upper, lower)
 			elseif outputFlag == 2
-				@printf("upper:  %.4e  \t lower: %.4e \n", upper, lower) 
-				@printf("%d nodes left  \t %d in \t %.4e seconds \n", num_nodes, explored, time()-start) 
-			elseif outputFlag == 3
-				s=@sprintf("%.4e, %.4e, %.4e, %d, %d \n", time()-start, upper, lower, explored, num_nodes) 
+				Printf.@printf("upper:  %.4e  \t lower: %.4e \n", upper, lower)
+				Printf.@printf("%d nodes left  \t %d in \t %.4e seconds \n", num_nodes, explored, time()-start)
+			elseif outputFlag == 3 && num_nodes>0
+				s=Printf.@sprintf("%6d, %6d, %10f, %10f, %10.3f %%, %10.3f s\n", num_nodes, explored, upper, lower, (upper-lower)/(1e-10+upper)*100, time()-start)
 				print(s)
 				push!(toPrint, s)
 			end
 		end
 
-
-
-		#selecting node to split on 
+		#selecting node to split on
 		selected_node = select_node()
 		if selected_node == 0
 			break;
 		end
 		old_y = nodes[:, selected_node]
-		
+
 		# Determines whether to split in 2 on one dimension or use multiple segments
 		if (K-sum(max.(old_y,0)) < ksegmentsTrigger) & (randn()>1)
 			numOnes = sum(max.(old_y,0))
-			negOnes = find(s->s==-1, old_y)
+			negOnes = findall(s->s==-1, old_y)
 			if length(negOnes) >= (K-numOnes+1)*2
 				numBranches = round.(Integer,K-numOnes+1)
-				newNodes = transpose(repmat(transpose(old_y), numBranches))
+				newNodes = transpose(repeat(transpose(old_y), numBranches))
 				partition = yourpart(negOnes,numBranches)
 				for i = 1:numBranches
 					newNodes[partition[i],i] = 0
 				end
 			else
 				numBranches = 2
-				newNodes = transpose(repmat(transpose(old_y), numBranches))
+				newNodes = transpose(repeat(transpose(old_y), numBranches))
 				branch_dim = branchDimSelect(old_y)
 				newNodes[branch_dim ,1] = 1
 				newNodes[branch_dim ,2] = 0
 			end
 		else
 			numBranches = 2
-			newNodes = transpose(repmat(transpose(old_y), numBranches))
+			newNodes = transpose(repeat(transpose(old_y), numBranches))
 			branch_dim = branchDimSelect(old_y)
 			newNodes[branch_dim ,1] = 1
 			newNodes[branch_dim ,2] = 0
 		end
 
 		# Computes bounds at new nodes and saves them if not dominated or terminal
-		lower_revised = 0 
+		lower_revised = 0
 		oldub = upper_bounds[selected_node]
 		for i = 1:numBranches
 			lb, ub = return_bounds(newNodes[:,i], oldub)
@@ -401,11 +403,11 @@ function branchAndBound(prob, #problem object
 
 	# records time taken
 	timeToBestBound = BestBoundtime - start
-	
-	# final statistics
-	s=@sprintf("%.4e, %.4e, %.4e, %d, %d \n", time()-start, upper, lower, explored, num_nodes) 
+
+
+	s=Printf.@sprintf("%6d, %6d, %10f, %10f, %10.3f %%, %10.3f s \n", num_nodes, explored, upper, lower, (upper-lower)/(1e-10+upper)*100, time()-start)
 	push!(toPrint, s)
-	
+
 	# records whether the algorithm timed out
 	timeOut = false
 	if time()-start > timeCap
@@ -414,13 +416,21 @@ function branchAndBound(prob, #problem object
 
 	# saves final solutions
 	y = (YuanSubset(best_node)[2].!=0)*1
-	
+
 	yKeep = .!(y.==0)
 	Q = copy(Sigma[yKeep,yKeep])
-	eig_soln = eig(Q)
-	obj = maximum(eig_soln[1])
+	lambdas=Float64[]
+	betas=Float64[]
+	if size(Q,1)>1
+		lambdas, betas, =Arpack.eigs(Q, which=:LR, nev=1)
+	else
+		lambdas=[1.0]
+		betas=[1.0]
+	end
+	eig_soln = betas[:,1]
+	obj = lambdas[1]
 	xVal = zeros(length(y))
-	xVal[yKeep] = eig_soln[2][:,indmax(eig_soln[1])]
+	xVal[yKeep] = eig_soln
 
 	return obj, # objective value
 			xVal, # best feasible solution

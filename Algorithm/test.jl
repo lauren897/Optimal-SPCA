@@ -1,11 +1,11 @@
 # Required packages
-using DataFrames, StatsBase
+using DataFrames, StatsBase, Printf, LinearAlgebra
 
 # Reading in source files
-include("dat.jl");		
-include("branchAndBound.jl"); 
-include("utilities.jl"); 
-include("multiComponents.jl"); 
+include("dat.jl");
+include("branchAndBound.jl");
+include("utilities.jl");
+include("multiComponents.jl");
 
 
 
@@ -13,7 +13,7 @@ include("multiComponents.jl");
 # Pitprops example
 k=5; # desired sparsity
 prob = pitprops; #problem selection
-obj, xVal, timetoBound, timetoConverge, timeOut, 
+obj, xVal, timetoBound, timetoConverge, timeOut,
 	explored, toPrint = branchAndBound(prob, k) ;
 
 print(@sprintf("objective value: %.4e\n", obj));
@@ -31,7 +31,7 @@ syntheticprob = problem(dataset, Sigma);
 
 k=5; # desired sparsity
 prob = syntheticprob; #problem selection
-obj, xVal, timetoBound, timetoConverge, timeOut, 
+obj, xVal, timetoBound, timetoConverge, timeOut,
 	explored, toPrint = branchAndBound(prob, k, outputFlag=0) ;
 
 print(@sprintf("objective value: %.4e\n", obj));
@@ -55,4 +55,3 @@ print(total_variance);
 print(@sprintf("total time: %.4e\n", timeOut));
 println("solution vectors:");
 print(all_x);
-

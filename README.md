@@ -21,18 +21,28 @@ using a branch-and-bound approach.  The code implements Optimal-SPCA in the pape
 
 ## Installation and set up
 
-In order to run this software, you must install a recent version of Julia from http://julialang.org/downloads/.  The most recent version of Julia at the time this code was last tested was Julia 0.6.0.
+In order to run this software, you must install a recent version of Julia from http://julialang.org/downloads/.  The most recent version of Julia at the time this code was last tested was Julia 1.1.0.
 
-Two packages must be installed in Julia before the code can be run.  These packages are DataFrames, and StatsBase.  They can be added by running:
+Several packages must be installed in Julia before the code can be run.  These packages are Test, DataFrames, StatsBase, Printf, LinearAlgebra, JLD and Arpack.  They can be added by running:
 
+`using Pkg`
+`Pkg.add("Test")`
 `Pkg.add("DataFrames")`
 `Pkg.add("StatsBase")`
+`Pkg.add("Printf")`
+`Pkg.add("LinearAlgebra")`
+`Pkg.add("JLD")`
+`Pkg.add("Arpack")`
 
-At this point, the file "test.jl" should run successfully.  To run the script, navigate to the Algorithm directory and run:
+At this point, the files "test.jl", test1.jl" and test2.jl" should run successfully.  To run the script, navigate to the Algorithm directory and run:
 
 `include("test.jl")`
 
- The script will run Optimal-SPCA on the Pitprops dataset, and then generate an additional random problem and run the algorithm on that problem.  It will then identify the first few sparse principal components using Optimal-SPCA sequentially and reporting the cumulative variance explained. 
+or similar.
+
+ The "test.jl" script will run Optimal-SPCA on the Pitprops dataset, and then generate an additional random problem and run the algorithm on that problem.  It will then identify the first few sparse principal components using Optimal-SPCA sequentially and reporting the cumulative variance explained. 
+ 
+ The "test1.jl" script will reproduce the results generated for various datasets in the paper, and the "test2.jl" script will produce the optimal sparse principal component for different values of k in the pitprops dataset.
 
 ## Use of the branchAndBound() function
 

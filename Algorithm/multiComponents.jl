@@ -1,8 +1,8 @@
-using CSV
+using LinearAlgebra
 
 
 function projectMatrix(sig, xVal)
-	I = eye(size(sig,1))
+	I = 1.0*Matrix(LinearAlgebra.I,size(sig,1),size(sig,1))
 	xx = (I - xVal*xVal')
 	A3 = xx*sig*xx
     return A3
@@ -14,7 +14,7 @@ function multiOptimalSPCA(prob, k, ncomp)
 	myprob = problem(copy(prob.data),copy(prob.Sigma))
 	st = time()
 	all_x = zeros(ncomp, size(myprob.Sigma,1))
-	
+
 	for rnd = 1:ncomp
 		~, xVal, ~, ~, ~, ~, ~ = branchAndBound(myprob, k, outputFlag=0, timeCap = 60) ;
 		all_x[rnd,:] = xVal
@@ -41,6 +41,3 @@ function adjVarExplained(Sigma, xVal)
 
 	return varexplained
 end
-
-
-
