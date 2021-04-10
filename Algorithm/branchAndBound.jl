@@ -5,7 +5,7 @@ function branchAndBound(prob, #problem object
 		timeCap = 3600, #maximum time in seconds
 		warmStart = zeros(1), #warm start vector
 
-		maxDepth = 10000, #maximum number of active nodes in the tree
+		maxDepth = 1000, #maximum number of active nodes in the tree
 		localSearchSteps = 2, # number of steps to take to find good feasible solutions at each node
 		ksegmentsTrigger = 0, # use alternative branching when the number of indices left to set falls below this number
 		dimSelectSteps = 10, # number of steps to take in choosing the dimension to branch on
@@ -106,14 +106,20 @@ function branchAndBound(prob, #problem object
 
 		eb1=0
 		cutoff = oldub*(1-1e-6)
-		for i=1:length(y)
-			if y[i]==-1
-			    newsum = startingsums[i]
+
+		for i=1:length(y) # scanning over all columns
+			if y[i]==-1 || y[i]==1 # which columns to consider
+			    newsum = startingsums[i] # must include these rows
 			    added = 0
+			    if y[i]==-1 
+			    	# if we choose column i, we must choose row i
+			    	newsum = newsum + absSigma[i,i]
+			    	added = 1
+			    end
 			    j=1
 			    while added < stillneed
 			        candidateIndex = permMat[i,j]
-			        if y[candidateIndex]==-1
+			        if y[candidateIndex]==-1 && candidateIndex != i
 			            newsum = newsum + absSigma[i,candidateIndex]
 			            added = added + 1
 			        end
@@ -404,7 +410,6 @@ function branchAndBound(prob, #problem object
 	# records time taken
 	timeToBestBound = BestBoundtime - start
 
-
 	s=Printf.@sprintf("%6d, %6d, %10f, %10f, %10.3f %%, %10.3f s \n", num_nodes, explored, upper, lower, (upper-lower)/(1e-10+upper)*100, time()-start)
 	push!(toPrint, s)
 
@@ -432,12 +437,15 @@ function branchAndBound(prob, #problem object
 	xVal = zeros(length(y))
 	xVal[yKeep] = eig_soln
 
+	final_gap = max(0,(upper-lower)/(1e-10+upper)*100)
+
 	return obj, # objective value
 			xVal, # best feasible solution
 			timeToBestBound, # time elapsed from the state to the identification of the best feasible solution
 			time()-start, # total time
 			timeOut, # whether the algorithm timed out
 			explored, # how many nodes were searched
-			toPrint #complete output
+			toPrint, #complete output
+			final_gap # final optimality gap
 
 end

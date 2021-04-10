@@ -1,3 +1,5 @@
+using DataFrames, StatsBase
+
 mutable struct problem
     data::Array{Float64}
     Sigma::Array{Float64}
@@ -34,10 +36,11 @@ function shrinkProblem(prob, dimensions)
 			selection = sample(1:size(r)[2] ,dimensions, replace=false)
 			r = r[:, selection]
 		end
-		r = r - ones(size(r)[1])*mean(r, 1)
+		r = r .- Transpose(mean.(eachcol(r)))
 		problem2.data = r
-		problem2.Sigma = cov(r)
-		finished = isposdef(problem2.Sigma)
+		problem2.Sigma = r'*r/size(r)[1];
+		# finished = isposdef(problem2.Sigma) # removing so we can go higher than 250
+		finished = true
 	end
 	return problem2
 end
