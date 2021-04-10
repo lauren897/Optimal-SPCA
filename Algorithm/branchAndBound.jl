@@ -108,16 +108,18 @@ function branchAndBound(prob, #problem object
 		cutoff = oldub*(1-1e-6)
 
 		for i=1:length(y) # scanning over all columns
-			if y[i]==-1 | y[i]==1 # which columns to consider
+			if y[i]==-1 || y[i]==1 # which columns to consider
 			    newsum = startingsums[i] # must include these rows
 			    added = 0
 			    if y[i]==-1 
 			    	# if we choose column i, we must choose row i
 			    	newsum = newsum + absSigma[i,i]
 			    	added = 1
+			    end
+			    j=1
 			    while added < stillneed
 			        candidateIndex = permMat[i,j]
-			        if y[candidateIndex]==-1 & candidateIndex != i
+			        if y[candidateIndex]==-1 && candidateIndex != i
 			            newsum = newsum + absSigma[i,candidateIndex]
 			            added = added + 1
 			        end
